@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="e230572f-2dcf-4de6-afdb-20b9a612ded1" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/vapi/generate/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/vapi/generate/route.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -143,7 +142,7 @@
       <workItem from="1756453715697" duration="9455000" />
       <workItem from="1756464913454" duration="1841000" />
       <workItem from="1756635066447" duration="12526000" />
-      <workItem from="1756805099023" duration="4325000" />
+      <workItem from="1756805099023" duration="5998000" />
     </task>
     <servers />
   </component>
