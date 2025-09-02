@@ -5,18 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e230572f-2dcf-4de6-afdb-20b9a612ded1" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/components/DisplayTechIcons.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/components/InterviewCard.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/firebase/admin.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/firebase/client.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/actions/auth.action.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/(root)/interview/page.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/api/vapi/generate/route.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/components/Agent.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/vapi.sdk.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(root)/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(root)/layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(root)/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(root)/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/AuthForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/AuthForm.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/FormField.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/FormField.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/constants/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/constants/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/utils.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
@@ -28,26 +21,26 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "history": [
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;history&quot;: [
     {
-      "searchQuery": "3000",
-      "assignee": "abhishek-singh2007",
-      "author": "abhishek-singh2007"
+      &quot;searchQuery&quot;: &quot;3000&quot;,
+      &quot;assignee&quot;: &quot;abhishek-singh2007&quot;,
+      &quot;author&quot;: &quot;abhishek-singh2007&quot;
     }
   ],
-  "lastFilter": {
-    "searchQuery": "3000",
-    "assignee": "abhishek-singh2007",
-    "author": "abhishek-singh2007"
+  &quot;lastFilter&quot;: {
+    &quot;searchQuery&quot;: &quot;3000&quot;,
+    &quot;assignee&quot;: &quot;abhishek-singh2007&quot;,
+    &quot;author&quot;: &quot;abhishek-singh2007&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/abhishek-singh2007/ai-based-techinterview.git",
-    "accountId": "224f72d5-402b-4bec-8eda-11816fcfc99b"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/abhishek-singh2007/ai-based-techinterview.git&quot;,
+    &quot;accountId&quot;: &quot;224f72d5-402b-4bec-8eda-11816fcfc99b&quot;
   }
-}]]></component>
+}</component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="ProjectErrors" />
   </component>
@@ -71,6 +64,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;ToolWindow.Problems View.ShowToolbar&quot;: &quot;false&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;js.debugger.nextJs.config.created.client&quot;: &quot;true&quot;,
     &quot;js.debugger.nextJs.config.created.server&quot;: &quot;true&quot;,
@@ -153,7 +147,8 @@
       <workItem from="1756119589198" duration="3476000" />
       <workItem from="1756453715697" duration="9455000" />
       <workItem from="1756464913454" duration="1841000" />
-      <workItem from="1756635066447" duration="7511000" />
+      <workItem from="1756635066447" duration="12526000" />
+      <workItem from="1756805099023" duration="1745000" />
     </task>
     <servers />
   </component>
