@@ -4,6 +4,7 @@ import {
     FormItem,
     FormLabel,
     FormControl,
+    FormDescription,
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ interface FormFieldProps<T extends FieldValues> {
     name: Path<T>;
     label: string;
     placeholder?: string;
+    description?: string;
     type?: "text" | "email" | "password";
 }
 
@@ -21,6 +23,7 @@ const FormField = <T extends FieldValues>({
                                               name,
                                               label,
                                               placeholder,
+                                              description,
                                               type = "text",
                                           }: FormFieldProps<T>) => {
     return (
@@ -38,6 +41,7 @@ const FormField = <T extends FieldValues>({
                             {...field}
                         />
                     </FormControl>
+                    {description && <FormDescription>{description}</FormDescription>}
                     <FormMessage />
                 </FormItem>
             )}

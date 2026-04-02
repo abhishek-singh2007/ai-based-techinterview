@@ -8,6 +8,7 @@ import { auth } from "@/firebase/client";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { FirebaseError } from "firebase/app";
 
 import {
     createUserWithEmailAndPassword,
@@ -20,11 +21,49 @@ import { Button } from "@/components/ui/button";
 import { signIn, signUp } from "@/lib/actions/auth.action";
 import FormField from "./FormField";
 
+const getFirebaseAuthErrorMessage = (error: FirebaseError, type: FormType) => {
+    const authErrorMessages: Record<string, string> = {
+        "auth/invalid-credential":
+            "Invalid email or password. Please check both and try again.",
+        "auth/user-not-found": "No account found for this email.",
+        "auth/wrong-password": "Incorrect password. Please try again.",
+        "auth/invalid-email": "Please enter a valid email address.",
+        "auth/user-disabled": "This account has been disabled.",
+        "auth/too-many-requests":
+            "Too many attempts. Please wait a bit and try again.",
+        "auth/network-request-failed":
+            "Network error. Check your internet connection and try again.",
+        "auth/email-already-in-use": "This email is already registered.",
+        "auth/weak-password":
+            "Password must be strong: min 7 chars, 1 uppercase, and 1 number.",
+    };
+
+    const mappedMessage = authErrorMessages[error.code];
+    if (mappedMessage) {
+        return mappedMessage;
+    }
+
+    if (type === "sign-in") {
+        return `Sign in failed (${error.code}): ${error.message}`;
+    }
+
+    return `Sign up failed (${error.code}): ${error.message}`;
+};
+
 const authFormSchema = (type: FormType) => {
+    const signUpPasswordSchema = z
+        .string()
+        .min(7, "Password must be at least 7 characters long")
+        .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+        .regex(/\d/, "Password must contain at least one number");
+
     return z.object({
         name: type === "sign-up" ? z.string().min(3) : z.string().optional(),
         email: z.string().email(),
-        password: z.string().min(3),
+        password:
+            type === "sign-up"
+                ? signUpPasswordSchema
+                : z.string().min(1, "Password is required"),
     });
 };
 
@@ -81,17 +120,46 @@ const AuthForm = ({ type }: { type: FormType }) => {
                     return;
                 }
 
-                await signIn({
+                const result = await signIn({
                     email,
                     idToken,
                 });
+
+                if (!result?.success) {
+                    toast.error(result?.message || "Sign in failed. Please try again.");
+                    return;
+                }
 
                 toast.success("Signed in successfully.");
                 router.push("/");
             }
         } catch (error) {
             console.log(error);
-            toast.error(`There was an error: ${error}`);
+
+            if (error instanceof FirebaseError) {
+                const authErrorMessage = getFirebaseAuthErrorMessage(error, type);
+
+                if (error.code === "auth/weak-password") {
+                    form.setError("password", {
+                        type: "manual",
+                        message: authErrorMessage,
+                    });
+                    return;
+                }
+
+                if (error.code === "auth/email-already-in-use") {
+                    form.setError("email", {
+                        type: "manual",
+                        message: authErrorMessage,
+                    });
+                    return;
+                }
+
+                toast.error(authErrorMessage);
+                return;
+            }
+
+            toast.error("There was an error. Please try again later.");
         }
     };
 
@@ -135,6 +203,11 @@ const AuthForm = ({ type }: { type: FormType }) => {
                             name="password"
                             label="Password"
                             placeholder="Enter your password"
+                            description={
+                                !isSignIn
+                                    ? "Kindly use a strong password (min 7 chars, 1 uppercase, 1 number)."
+                                    : undefined
+                            }
                             type="password"
                         />
 
