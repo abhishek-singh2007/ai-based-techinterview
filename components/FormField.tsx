@@ -1,4 +1,5 @@
 import { Controller, Control, FieldValues, Path } from "react-hook-form";
+import type { ComponentProps } from "react";
 
 import {
     FormItem,
@@ -15,7 +16,7 @@ interface FormFieldProps<T extends FieldValues> {
     label: string;
     placeholder?: string;
     description?: string;
-    type?: "text" | "email" | "password";
+    type?: ComponentProps<typeof Input>["type"];
 }
 
 const FormField = <T extends FieldValues>({

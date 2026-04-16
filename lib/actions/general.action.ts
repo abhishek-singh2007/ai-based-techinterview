@@ -5,6 +5,7 @@ import { google } from "@ai-sdk/google";
 
 import { db } from "@/firebase/admin";
 import { feedbackSchema } from "@/constants";
+import { buildFallbackFeedback, classifyAiError } from "@/lib/fallback";
 
 export async function createFeedback(params: CreateFeedbackParams) {
     const { interviewId, userId, transcript, feedbackId } = params;
@@ -18,9 +19,7 @@ export async function createFeedback(params: CreateFeedbackParams) {
             .join("");
 
         const { object } = await generateObject({
-            model: google("gemini-2.0-flash-001", {
-                structuredOutputs: false,
-            }),
+            model: google("gemini-2.0-flash-001"),
             schema: feedbackSchema,
             prompt: `
         You are an AI interviewer analyzing a mock interview. Your task is to evaluate the candidate based on structured categories. Be thorough and detailed in your analysis. Don't be lenient with the candidate. If there are mistakes or areas for improvement, point them out.
@@ -47,6 +46,7 @@ export async function createFeedback(params: CreateFeedbackParams) {
             areasForImprovement: object.areasForImprovement,
             finalAssessment: object.finalAssessment,
             createdAt: new Date().toISOString(),
+            feedbackMode: "ai",
         };
 
         let feedbackRef;
@@ -59,10 +59,50 @@ export async function createFeedback(params: CreateFeedbackParams) {
 
         await feedbackRef.set(feedback);
 
-        return { success: true, feedbackId: feedbackRef.id };
+        return {
+            success: true,
+            feedbackId: feedbackRef.id,
+            mode: "ai",
+            message: "Feedback generated successfully.",
+        };
     } catch (error) {
         console.error("Error saving feedback:", error);
-        return { success: false };
+
+        try {
+            const interview = await getInterviewById(interviewId);
+            const fallbackFeedback = buildFallbackFeedback({
+                transcript,
+                role: interview?.role,
+                techstack: interview?.techstack,
+            });
+
+            const feedback = {
+                interviewId,
+                userId,
+                ...fallbackFeedback,
+                createdAt: new Date().toISOString(),
+                feedbackMode: "fallback",
+            };
+
+            const feedbackRef = feedbackId
+                ? db.collection("feedback").doc(feedbackId)
+                : db.collection("feedback").doc();
+
+            await feedbackRef.set(feedback);
+
+            return {
+                success: true,
+                feedbackId: feedbackRef.id,
+                mode: "fallback",
+                message: classifyAiError(error).message,
+            };
+        } catch (fallbackError) {
+            console.error("Fallback feedback generation failed:", fallbackError);
+            return {
+                success: false,
+                message: "We could not save feedback right now. Please try again.",
+            };
+        }
     }
 }
 

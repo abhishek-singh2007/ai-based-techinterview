@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { vapi } from "@/lib/vapi.sdk";
@@ -34,6 +35,7 @@ const Agent = ({
   const [messages, setMessages] = useState<SavedMessage[]>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>("");
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   useEffect(() => {
     const onCallStart = () => {
@@ -63,6 +65,25 @@ const Agent = ({
 
     const onError = (error: Error) => {
       console.log("Error:", error);
+      setGenerationError(error.message);
+      setCallStatus(CallStatus.INACTIVE);
+      toast.error(error.message || "Generation failed. Please try again.");
+    };
+
+    const onCallStartProgress = (event: { stage: string; status: string }) => {
+      console.log("Call start progress:", event.stage, event.status);
+    };
+
+    const onCallStartSuccess = (event: { totalDuration: number }) => {
+      console.log("Call start success in", event.totalDuration, "ms");
+    };
+
+    const onCallStartFailed = (event: { stage: string; error: string }) => {
+      const message = `Generation failed at ${event.stage}: ${event.error}`;
+      console.log("Call start failed:", event);
+      setGenerationError(message);
+      setCallStatus(CallStatus.INACTIVE);
+      toast.error(message);
     };
 
     vapi.on("call-start", onCallStart);
@@ -71,6 +92,9 @@ const Agent = ({
     vapi.on("speech-start", onSpeechStart);
     vapi.on("speech-end", onSpeechEnd);
     vapi.on("error", onError);
+    vapi.on("call-start-progress", onCallStartProgress);
+    vapi.on("call-start-success", onCallStartSuccess);
+    vapi.on("call-start-failed", onCallStartFailed);
 
     return () => {
       vapi.off("call-start", onCallStart);
@@ -79,6 +103,9 @@ const Agent = ({
       vapi.off("speech-start", onSpeechStart);
       vapi.off("speech-end", onSpeechEnd);
       vapi.off("error", onError);
+      vapi.off("call-start-progress", onCallStartProgress);
+      vapi.off("call-start-success", onCallStartSuccess);
+      vapi.off("call-start-failed", onCallStartFailed);
     };
   }, []);
 
@@ -100,30 +127,56 @@ const Agent = ({
       if (success && id) {
         router.push(`/interview/${interviewId}/feedback`);
       } else {
-        console.log("Error saving feedback");
+        toast.error("We could not save feedback right now. Please try again.");
         router.push("/");
       }
     };
 
     if (callStatus === CallStatus.FINISHED) {
       if (type === "generate") {
+        if (generationError) {
+          toast.error(generationError);
+          setGenerationError(null);
+          return;
+        }
+
         router.push("/");
       } else {
         handleGenerateFeedback(messages);
       }
     }
-  }, [messages, callStatus, feedbackId, interviewId, router, type, userId]);
+  }, [generationError, messages, callStatus, feedbackId, interviewId, router, type, userId]);
 
   const handleCall = async () => {
+    setGenerationError(null);
     setCallStatus(CallStatus.CONNECTING);
 
     if (type === "generate") {
-      await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
-        variableValues: {
-          username: userName,
-          userid: userId,
-        },
-      });
+      try {
+        const workflowId = process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID;
+
+        if (!workflowId) {
+          throw new Error("Missing NEXT_PUBLIC_VAPI_WORKFLOW_ID.");
+        }
+
+        await vapi.start(
+          undefined,
+          undefined,
+          undefined,
+          workflowId,
+          {
+            variableValues: {
+              username: userName,
+              userid: userId,
+            },
+          }
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to start Vapi workflow.";
+        setGenerationError(message);
+        setCallStatus(CallStatus.INACTIVE);
+        toast.error(message);
+      }
     } else {
       let formattedQuestions = "";
       if (questions) {
@@ -132,11 +185,17 @@ const Agent = ({
           .join("\n");
       }
 
-      await vapi.start(interviewer, {
-        variableValues: {
-          questions: formattedQuestions,
-        },
-      });
+      try {
+        await vapi.start(interviewer, {
+          variableValues: {
+            questions: formattedQuestions,
+          },
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to start interview workflow.";
+        toast.error(message);
+        setCallStatus(CallStatus.INACTIVE);
+      }
     }
   };
 
