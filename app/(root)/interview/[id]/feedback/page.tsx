@@ -3,16 +3,17 @@ import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
+import { Button } from "@/components/ui/button";
 import {
     getFeedbackByInterviewId,
     getInterviewById,
 } from "@/lib/actions/general.action";
-import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/actions/auth.action";
 
 const Feedback = async ({ params }: RouteParams) => {
     const { id } = await params;
     const user = await getCurrentUser();
+
     if (!user || !user.id) redirect("/sign-in");
 
     const interview = await getInterviewById(id);
@@ -23,6 +24,37 @@ const Feedback = async ({ params }: RouteParams) => {
         userId: user.id,
     });
 
+    if (!feedback) {
+        return (
+            <section className="section-feedback">
+                <div className="flex flex-col items-center gap-4 rounded-2xl border border-border/60 bg-card/80 p-8 text-center">
+                    <h1 className="text-3xl font-semibold">Feedback is not ready yet</h1>
+                    <p>
+                        We could not load feedback for this interview right now. You can go back
+                        to the dashboard or retake the interview.
+                    </p>
+                    <div className="buttons">
+                        <Button className="btn-secondary flex-1">
+                            <Link href="/" className="flex w-full justify-center">
+                                <p className="text-sm font-semibold text-primary-200 text-center">
+                                    Back to dashboard
+                                </p>
+                            </Link>
+                        </Button>
+
+                        <Button className="btn-primary flex-1">
+                            <Link href={`/interview/${id}`} className="flex w-full justify-center">
+                                <p className="text-sm font-semibold text-black text-center">
+                                    Retake Interview
+                                </p>
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+            </section>
+        );
+    }
+
     return (
         <section className="section-feedback">
             <div className="flex flex-row justify-center">
@@ -32,25 +64,31 @@ const Feedback = async ({ params }: RouteParams) => {
                 </h1>
             </div>
 
-            <div className="flex flex-row justify-center ">
+            {feedback.feedbackMode === "fallback" && (
+                <div className="flex justify-center">
+                    <p className="rounded-full border border-border/60 bg-card/70 px-4 py-2 text-sm text-light-100">
+                        Free fallback feedback was used because the AI service was unavailable.
+                    </p>
+                </div>
+            )}
+
+            <div className="flex flex-row justify-center">
                 <div className="flex flex-row gap-5">
-                    {/* Overall Impression */}
                     <div className="flex flex-row gap-2 items-center">
                         <Image src="/star.svg" width={22} height={22} alt="star" />
                         <p>
-                            Overall Impression:{" "}
+                            Overall Impression: {" "}
                             <span className="text-primary-200 font-bold">
-                {feedback?.totalScore}
-              </span>
+                                {feedback.totalScore}
+                            </span>
                             /100
                         </p>
                     </div>
 
-                    {/* Date */}
                     <div className="flex flex-row gap-2">
                         <Image src="/calendar.svg" width={22} height={22} alt="calendar" />
                         <p>
-                            {feedback?.createdAt
+                            {feedback.createdAt
                                 ? dayjs(feedback.createdAt).format("MMM D, YYYY h:mm A")
                                 : "N/A"}
                         </p>
@@ -60,12 +98,11 @@ const Feedback = async ({ params }: RouteParams) => {
 
             <hr />
 
-            <p>{feedback?.finalAssessment}</p>
+            <p>{feedback.finalAssessment}</p>
 
-            {/* Interview Breakdown */}
             <div className="flex flex-col gap-4">
                 <h2>Breakdown of the Interview:</h2>
-                {feedback?.categoryScores?.map((category, index) => (
+                {feedback.categoryScores.map((category, index) => (
                     <div key={index}>
                         <p className="font-bold">
                             {index + 1}. {category.name} ({category.score}/100)
@@ -78,7 +115,7 @@ const Feedback = async ({ params }: RouteParams) => {
             <div className="flex flex-col gap-3">
                 <h3>Strengths</h3>
                 <ul>
-                    {feedback?.strengths?.map((strength, index) => (
+                    {feedback.strengths.map((strength, index) => (
                         <li key={index}>{strength}</li>
                     ))}
                 </ul>
@@ -87,7 +124,7 @@ const Feedback = async ({ params }: RouteParams) => {
             <div className="flex flex-col gap-3">
                 <h3>Areas for Improvement</h3>
                 <ul>
-                    {feedback?.areasForImprovement?.map((area, index) => (
+                    {feedback.areasForImprovement.map((area, index) => (
                         <li key={index}>{area}</li>
                     ))}
                 </ul>
@@ -103,10 +140,7 @@ const Feedback = async ({ params }: RouteParams) => {
                 </Button>
 
                 <Button className="btn-primary flex-1">
-                    <Link
-                        href={`/interview/${id}`}
-                        className="flex w-full justify-center"
-                    >
+                    <Link href={`/interview/${id}`} className="flex w-full justify-center">
                         <p className="text-sm font-semibold text-black text-center">
                             Retake Interview
                         </p>

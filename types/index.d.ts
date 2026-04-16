@@ -11,6 +11,7 @@ interface Feedback {
   areasForImprovement: string[];
   finalAssessment: string;
   createdAt: string;
+  feedbackMode?: "ai" | "fallback";
 }
 
 interface Interview {
@@ -23,6 +24,7 @@ interface Interview {
   userId: string;
   type: string;
   finalized: boolean;
+  generationMode?: "ai" | "fallback";
 }
 
 interface CreateFeedbackParams {

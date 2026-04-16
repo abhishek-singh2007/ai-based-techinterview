@@ -4,20 +4,15 @@ import { z } from "zod";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
-import { auth } from "@/firebase/client";
+import { FirebaseError } from "firebase/app";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FirebaseError } from "firebase/app";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 
-import {
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-} from "firebase/auth";
-
+import { auth, firebaseClientConfigIssues } from "@/firebase/client";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-
 import { signIn, signUp } from "@/lib/actions/auth.action";
 import FormField from "./FormField";
 
@@ -36,6 +31,10 @@ const getFirebaseAuthErrorMessage = (error: FirebaseError, type: FormType) => {
         "auth/email-already-in-use": "This email is already registered.",
         "auth/weak-password":
             "Password must be strong: min 7 chars, 1 uppercase, and 1 number.",
+        "auth/invalid-api-key":
+            "Firebase is not configured correctly. Please check your client environment variables.",
+        "auth/operation-not-allowed":
+            "This sign-in method is disabled in Firebase. Please enable it in the console.",
     };
 
     const mappedMessage = authErrorMessages[error.code];
@@ -58,8 +57,11 @@ const authFormSchema = (type: FormType) => {
         .regex(/\d/, "Password must contain at least one number");
 
     return z.object({
-        name: type === "sign-up" ? z.string().min(3) : z.string().optional(),
-        email: z.string().email(),
+        name:
+            type === "sign-up"
+                ? z.string().min(3, "Name must be at least 3 characters long")
+                : z.string().optional(),
+        email: z.string().email("Please enter a valid email address."),
         password:
             type === "sign-up"
                 ? signUpPasswordSchema
@@ -69,8 +71,8 @@ const authFormSchema = (type: FormType) => {
 
 const AuthForm = ({ type }: { type: FormType }) => {
     const router = useRouter();
-
     const formSchema = authFormSchema(type);
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -82,6 +84,15 @@ const AuthForm = ({ type }: { type: FormType }) => {
 
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
         try {
+            if (firebaseClientConfigIssues.length > 0) {
+                toast.error(
+                    `Firebase setup is incomplete: ${firebaseClientConfigIssues.join(
+                        ", "
+                    )}. Please check .env.local and restart the dev server.`
+                );
+                return;
+            }
+
             if (type === "sign-up") {
                 const { name, email, password } = data;
 
@@ -116,7 +127,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
 
                 const idToken = await userCredential.user.getIdToken();
                 if (!idToken) {
-                    toast.error("Sign in Failed. Please try again.");
+                    toast.error("Sign in failed. Please try again.");
                     return;
                 }
 
@@ -134,8 +145,6 @@ const AuthForm = ({ type }: { type: FormType }) => {
                 router.push("/");
             }
         } catch (error) {
-            console.log(error);
-
             if (error instanceof FirebaseError) {
                 const authErrorMessage = getFirebaseAuthErrorMessage(error, type);
 
@@ -147,7 +156,10 @@ const AuthForm = ({ type }: { type: FormType }) => {
                     return;
                 }
 
-                if (error.code === "auth/email-already-in-use") {
+                if (
+                    error.code === "auth/email-already-in-use" ||
+                    error.code === "auth/invalid-email"
+                ) {
                     form.setError("email", {
                         type: "manual",
                         message: authErrorMessage,
@@ -167,8 +179,8 @@ const AuthForm = ({ type }: { type: FormType }) => {
 
     return (
         <div className="card-border lg:min-w-[566px]">
-            <div className="flex flex-col gap-6 card py-14 px-10">
-                <div className="flex flex-row gap-2 justify-center">
+            <div className="card flex flex-col gap-6 px-10 py-14">
+                <div className="flex flex-row justify-center gap-2">
                     <Image src="/logo.svg" alt="logo" height={32} width={38} />
                     <h2 className="text-primary-100">Prepguru</h2>
                 </div>
@@ -178,7 +190,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
                 <Form {...form}>
                     <form
                         onSubmit={form.handleSubmit(onSubmit)}
-                        className="w-full space-y-6 mt-4 form"
+                        className="form mt-4 w-full space-y-6"
                     >
                         {!isSignIn && (
                             <FormField
